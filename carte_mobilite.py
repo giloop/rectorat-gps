@@ -1,75 +1,20 @@
 # V2 sur un fichier de villes/localisation d'une autre source
 #%% Imports
-import folium
-from folium import plugins
-from folium.plugins.marker_cluster import MarkerCluster
+# import folium
+# from folium import plugins
+# from folium.plugins.marker_cluster import MarkerCluster
 import json
-import requests
+# import requests
 import numpy as np
 import pandas as pd
-from random import random
-import unicodedata
-import math
-
-
-#%% Fonctions utilitaires pour supprimer les accents
-# Sur un dataframe
-prep_string_df = lambda x: x.str.normalize('NFKD').str.replace("œ","oe").str.encode('ascii', errors='ignore').str.decode('utf-8').str.replace('-',' ').str.replace("'",' ').str.upper()
-# Sur une chaine
-prep_string = lambda x: unicodedata.normalize('NFKD',x).replace("œ","oe").encode('ascii', errors='ignore').decode('utf-8').replace('-',' ').replace("'",' ').upper()
-
-
-#%% Lecture des données
-
-#  Fichier eucircos
-df_regions = pd.read_csv('eucircos_regions_departements_circonscriptions_communes_gps.csv', encoding='utf-8', sep=";", 
-dtype={'nom_département': str, 'codes_postaux':str, 'latitude':float, 'longitude':float})
-#['EU_circo', 'code_région', 'nom_région', 'chef-lieu_région','numéro_département', 'nom_département', 'préfecture', 
-# 'numéro_circonscription', 'nom_commune', 'codes_postaux', 'code_insee', 'latitude', 'longitude', 'éloignement']
-df_regions['COM'] = prep_string_df(df_regions['nom_commune'])
-df_regions['DEP'] = prep_string_df(df_regions['nom_département'])
-df_regions['REG'] = prep_string_df(df_regions['nom_région'])
-
-
-
-#%% Fichier INSEE
-df_insee = pd.read_csv('codesinseecommunesgeolocalisees.csv', encoding='utf-8', sep=",")
-df_insee["longitude"] = df_insee["longitude_radian"] * 180 / math.pi
-df_insee["latitude"] = df_insee["latitude_radian"] * 180 / math.pi
-df_insee.drop(['latitude_radian', 'longitude_radian'], axis=1, inplace=True)
-df_insee['COM'] = prep_string_df(df_insee['Nom'])
-#['Insee', 'Nom', 'Altitude', 'code_postal', 'longitude_radian',
-# 'latitude_radian', 'pop99', 'surface', 'longitude', 'latitude']
-
-#%% Fichier la poste
-df_poste = pd.read_csv('laposte_hexasmal.csv', encoding='utf-8', sep=";", 
-dtype={'Code_postal':str, 'latitude':float, 'longitude':float})
-
-df_poste['numéro_département'] = df_poste['Code_commune_INSEE'].apply(lambda x : x[0:3] if x.startswith('97') or x.startswith('98') else x[0:2])
-
-# Code_commune_INSEE;Nom_commune;Code_postal;Ligne_5;Libellé_d_acheminement;latitude;longitude
-df_poste.drop(['Ligne_5', 'Libellé_d_acheminement'], axis=1, inplace=True)
-df_poste.drop_duplicates(inplace=True)
-
-# On ajoute les départements dans df_poste
-df_poste = pd.merge(df_poste,
-             df_regions[['numéro_département','nom_département']].drop_duplicates(), 
-             how='left', on='numéro_département')
-
-# Colonne pour recherche
-df_poste['COM'] = prep_string_df(df_poste['Nom_commune'])
-df_poste['DEP'] = prep_string_df(df_poste['nom_département'])
-
-#%% Chargement fichiers Excel à renseigner 
-from openpyxl import load_workbook
 from OSMPythonTools.nominatim import Nominatim
 from time import sleep
-import re
+
+# Création de l'objet de recherche des adresses
 nominatim = Nominatim()
 
 #%% Lecture des fichiers
-
-                        
+                       
 arExcel = [ 
     {'fic': "./2021 - KA120-SCH Accréditation Erasmus dans l'enseignement scolaire.xlsx",
             'feuil':'Worksheet'},
@@ -83,7 +28,7 @@ arExcel = [
 cpt_total = 0
 cpt_ko = 0
 cpt_adr_ko = 0
-for xl in arExcel[2:]:
+for xl in arExcel:
     fic = xl['fic']
     feuil = xl['feuil']
     
