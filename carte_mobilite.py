@@ -114,9 +114,9 @@ n_ko = 0
 for xl in arExcel:
     fic = xl['fic'].replace('.xlsx', '_modif.xlsx')
     feuil = xl['feuil']
-    print(f"{fic} : {len(df)} lignes")
-
+    
     df = pd.read_excel(fic, sheet_name=feuil, header=0)
+    print(f"{fic} : {len(df)} lignes")
 
     for idx, row in df.iterrows():
         # Test des différents cas
@@ -131,7 +131,7 @@ for xl in arExcel:
             str_cp = row['CodePostal']
 
 
-        info = f"{row['Code projet']}<br>{row['Ville']}({str_cp})<br/>{row['Adresse']}"
+        info = f"{row['Organisme candidat']}<br>{row['Code projet']}<br>{row['Ville']}({str_cp})<br/>{row['Adresse']}"
         
         # Vérif coords : si NaN
         if  any(np.isnan(coords)):
