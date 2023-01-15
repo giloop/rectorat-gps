@@ -9,28 +9,30 @@ import numpy as np
 import pandas as pd
 from OSMPythonTools.nominatim import Nominatim
 from time import sleep
+from glob import glob
 
 # Création de l'objet de recherche des adresses
 nominatim = Nominatim()
 
 #%% Lecture des fichiers
-                       
-arExcel = [ 
-    {'fic': "./2021 - KA120-SCH Accréditation Erasmus dans l'enseignement scolaire.xlsx",
-            'feuil':'Worksheet'},
-    {'fic': "2022 - KA122-SCH Projets de mobilité de courte durée pour les élèves et le personnel de l'enseignement scolaire.xlsx",
-            'feuil': "Worksheet"},
-    {'fic': "2022 KA121-SCH Projets de mobilité accrédités pour les élèves et le personnel de l'enseignement scolaire.xlsx",
-            'feuil': "Worksheet"}
-        ]
+
+arExcel = glob("CODE-POSTAUX/*.xlsx")
+# arExcel = [ 
+#     {'fic': "./2021 - KA120-SCH Accréditation Erasmus dans l'enseignement scolaire.xlsx",
+#             'feuil':'Worksheet'},
+#     {'fic': "2022 - KA122-SCH Projets de mobilité de courte durée pour les élèves et le personnel de l'enseignement scolaire.xlsx",
+#             'feuil': "Worksheet"},
+#     {'fic': "2022 KA121-SCH Projets de mobilité accrédités pour les élèves et le personnel de l'enseignement scolaire.xlsx",
+#             'feuil': "Worksheet"}
+#         ]
 
 #%% Modificiations des fichiers, ajout des infos code + GPS
 cpt_total = 0
 cpt_ko = 0
 cpt_adr_ko = 0
 for xl in arExcel:
-    fic = xl['fic']
-    feuil = xl['feuil']
+    fic = xl
+    feuil = 'Worksheet' # xl['feuil']
     
     df = pd.read_excel(fic, sheet_name=feuil, header=0)
 
@@ -112,8 +114,8 @@ data_sites = []
 n_ko = 0
 
 for xl in arExcel:
-    fic = xl['fic'].replace('.xlsx', '_modif.xlsx')
-    feuil = xl['feuil']
+    fic = xl # .replace('.xlsx', '_modif.xlsx')
+    feuil = "Worksheet" # xl['feuil']
     
     df = pd.read_excel(fic, sheet_name=feuil, header=0)
     print(f"{fic} : {len(df)} lignes")
