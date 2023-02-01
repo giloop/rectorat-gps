@@ -10,13 +10,14 @@ import pandas as pd
 from OSMPythonTools.nominatim import Nominatim
 from time import sleep
 from glob import glob
+from os import path
 
 # Création de l'objet de recherche des adresses
 nominatim = Nominatim()
 
 #%% Lecture des fichiers
 
-arExcel = glob("CODE-POSTAUX/*.xlsx")
+arExcel = glob("*.xlsx")
 # arExcel = [ 
 #     {'fic': "./2021 - KA120-SCH Accréditation Erasmus dans l'enseignement scolaire.xlsx",
 #             'feuil':'Worksheet'},
@@ -33,7 +34,12 @@ cpt_adr_ko = 0
 for xl in arExcel:
     fic = xl
     feuil = 'Worksheet' # xl['feuil']
-    
+
+    # On passe les fichiers déjà traité et "_modifs" 
+    if (fic.endswith("_modif.xlsx") or path.exists(fic.replace('.xlsx', '_modif.xlsx'))):
+        print(f"{fic} déjà traité")
+        continue
+
     df = pd.read_excel(fic, sheet_name=feuil, header=0)
 
     cpt_total = cpt_total + df.shape[0]
@@ -98,17 +104,46 @@ print(f"{cpt_total} lignes lues : villes trouvées sans les adresses {cpt_adr_ko
 #%% ['Civilite', 'Nom', 'Prenom', 'Mandat', 'Circonscription', 'Departement', 'Candidat', 'DatePublication']
 # ['Code projet', 'Organisme candidat', 'Résultat de la sélection', 'Montant accordé', 'Ville', 'Adresse', 'CodePostal', 'lat', 'lon']
 
-# Couleurs des projets par type
-l_couleurs = {"Type 1" : "darkblue",
-"Type 2" : "red",
-"Type 3" : "green",
-"Type 4" : "lightblue",
-"Type 5" : "lightred",
-"Type 6" : "purple",
-"Type 7" : "orange"}
+# Recherche des labels de couleurs 
+arExcel = glob("*_modif.xlsx")
 
+l_codes_proj = []
+
+def format_code_projet(str_code):
+    v_codes = str_code.split('-')
+    code_new = v_codes[0] + " " + v_codes[3] + " "+ v_codes[4]
+    return code_new
+
+for xl in arExcel:
+    fic = xl # .replace('.xlsx', '_modif.xlsx')
+    feuil = "Worksheet" # xl['feuil']
+    
+    df = pd.read_excel(fic, sheet_name=feuil, header=0)
+    n_lig_orig = len(df)
+    
+    # Supprime les lignes sans CodePostal
+    df = df.dropna(subset=['CodePostal'])
+    df = df[df.CodePostal!='']
+
+    for code in df['Code projet'].to_list():
+        code_trim = format_code_projet(code)
+        l_codes_proj.append(code_trim)
+
+    print(f"{fic} : {len(df)} lignes conservées / {n_lig_orig}")
+
+# Couleurs des projets par type
+from collections import Counter
+print(Counter(l_codes_proj))
+
+l_codes_proj = list(set(l_codes_proj))
+
+v_couleurs = ["darkblue","red","green","lightblue","lightred",
+"purple","orange", "magenta", "blueviolet"]
+
+d_couleurs = dict(zip(l_codes_proj, v_couleurs))
 
 #%% Appariemment des données bis
+arExcel = glob("*_modif.xlsx")
 
 data_sites = []
 n_ko = 0
@@ -118,9 +153,15 @@ for xl in arExcel:
     feuil = "Worksheet" # xl['feuil']
     
     df = pd.read_excel(fic, sheet_name=feuil, header=0)
+    
+    # Supprime les lignes sans CodePostal
+    df = df.dropna(subset=['CodePostal'])
+    df = df[df.CodePostal!='']
     print(f"{fic} : {len(df)} lignes")
 
     for idx, row in df.iterrows():
+        code_proj = format_code_projet(row["Code projet"])
+
         # Test des différents cas
         if row['CodePostal'] == "Non trouvé":
             # Français de l'étranger : au milieu de l'atlantique
@@ -142,10 +183,10 @@ for xl in arExcel:
         
 
 
-        item = {"status": "etab",
+        item = {"code": code_proj,
         "organisme": row['Organisme candidat'],
         "coordinates" : coords,
-        "couleur": "lightgray" if row['CodePostal'] == "Non trouvé" else "lightred",
+        "couleur": d_couleurs[code_proj] if code_proj in d_couleurs.keys() else "lightgray",
         "infos": f"{info}"
         }
         data_sites.append(item)

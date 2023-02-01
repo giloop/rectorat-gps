@@ -1,8 +1,8 @@
 // Création de la map 
 var map_0 = L.map("map_0", {
-    center: [46.7687714, 4.5660859],
+    center: [48.16056544872657, -1.0280],
     crs: L.CRS.EPSG3857,
-    zoom: 2.1,
+    zoom: 8,
     zoomControl: true,
     preferCanvas: false,
     id: "my_map",
@@ -35,13 +35,11 @@ var groups = {
 var arKeys = Object.keys(groups)
 
 // Markers de type 
-var markers = L.markerClusterGroup({});
-map_0.addLayer(markers);
+//map_0.addLayer(groups);
 
 // Ajout des sous-groupes à la map
 arKeys.forEach(el => {
-    groups[el] = L.featureGroup.subGroup(markers);
-    groups[el].addTo(map_0);
+    groups[el] = L.layerGroup().addTo(map_0);
 })
 
 
@@ -53,15 +51,13 @@ function addMarker(item) {
     // "couleur": couleur par code projet,
     // "infos": f"{info}""}
 
-    foundKeys = arKeys.filter(el => item.code.includes(el))
-    if (foundKeys.length > 0) {
-        myGroup = foundKeys[0]
+    if (groups.hasOwnProperty(item.code)) {
+        myGroup = groups[item.code]
     } else {
-        myGroup = 'Autre'
+        myGroup = groups['Autre']
     }
 
     var marker = L.marker(item.coordinates, {})
-        .addTo(groups[myGroup])
         .bindPopup(item.infos)
         .bindTooltip(item.infos, { "sticky": true })
         .setIcon(L.AwesomeMarkers.icon({
@@ -71,6 +67,9 @@ function addMarker(item) {
             "markerColor": item.couleur,
             "prefix": "glyphicon"
         }));
+
+    myGroup.addLayer(marker);
+        
 }
 
 // Chargement des données
@@ -79,8 +78,15 @@ fetch('carto_programmes.json')
         return response.json()
     })
     .then(function(json) {
+        // log des groupes
+        const occurrences = json.reduce(function (acc, curr) {
+            return acc[curr.code] ? ++acc[curr.code] : acc[curr.code] = 1, acc
+          }, {});
+          console.log(occurrences);
         // traitement du JSON
         json.forEach(el => { addMarker(el) });
+
+
     })
     .catch(function(error) {
         console.log('Il y a eu un problème avec l\'opération fetch: ' + error.message);
